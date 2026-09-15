@@ -1,0 +1,33 @@
+# Follows the Anselm GitHub release: every six hours (and on demand) compare the latest release
+# with the cask, and commit the new version and DMG checksum when they differ. Runs entirely with
+# this repository's own token, so the main repo needs no cross-repo credential.
+name: bump
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compare and update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest="$(gh release view --repo Cookiezisg/Anselm --json tagName --jq .tagName)"
+          version="${latest#v}"
+          current="$(sed -n 's/^  version "\(.*\)"/\1/p' Casks/anselm.rb)"
+          if [[ "$version" == "$current" ]]; then echo "cask already at $version"; exit 0; fi
+          sha="$(gh release download "$latest" --repo Cookiezisg/Anselm --pattern SHA256SUMS.txt --output - | awk '/-macos\.dmg$/ {print $1}')"
+          [[ -n "$sha" ]] || { echo "no macOS DMG checksum in $latest" >&2; exit 1; }
+          sed -i "s/^  version \".*\"/  version \"$version\"/; s/^  sha256 \".*\"/  sha256 \"$sha\"/" Casks/anselm.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "anselm $version" && git push
