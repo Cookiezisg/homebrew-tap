@@ -1,6 +1,6 @@
 cask "anselm" do
-  version "0.1.3"
-  sha256 "3a23dfb003cb4ef075d6c59be65967d898c40aaed54bc4a09e50ee2e21d838d4"
+  version "0.1.4"
+  sha256 "682889535c27ba4e988e944ef160540a626fdaf2da5426c68a9a87ffddb6b74c"
 
   url "https://github.com/Cookiezisg/Anselm/releases/download/v#{version}/Anselm-#{version}-macos.dmg"
   name "Anselm"
